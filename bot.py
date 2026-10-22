@@ -14,19 +14,19 @@ from telegram.ext import (
 
 # ---- Set these in Render > Environment (NOT in this file) ----
 BOT_TOKEN = os.environ["BOT_TOKEN"]        # from @BotFather
-API_KEY = os.environ["API_KEY"]            # your Anthropic API key
-MODEL = os.environ.get("MODEL", "claude-sonnet-5-5")
+API_KEY = os.environ["API_KEY"]            # your router API key
+BASE_URL = os.environ.get("BASE_URL", "https://openrouter.ai/api/v1")
+MODEL = os.environ.get("MODEL", "openai/gpt-4o-mini")
 # --------------------------------------------------------------
 
 
 async def ask_ai(prompt: str) -> str:
     async with httpx.AsyncClient(timeout=60) as client:
         r = await client.post(
-            "https://api.anthropic.com/v1/messages",
+            f"{BASE_URL}/chat/completions",
             headers={
-                "x-api-key": API_KEY,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
+                "Authorization": f"Bearer {API_KEY}",
+                "Content-Type": "application/json",
             },
             json={
                 "model": MODEL,
@@ -35,8 +35,7 @@ async def ask_ai(prompt: str) -> str:
             },
         )
         r.raise_for_status()
-        data = r.json()
-        return "".join(b.get("text", "") for b in data["content"])
+        return r.json()["choices"][0]["message"]["content"]
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
